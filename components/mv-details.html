@@ -1,0 +1,98 @@
+<dom-module id="mv-details">
+    <style>
+        .right {
+            float: right;
+        }
+        
+        .container {
+            @apply(--layout-horizontal);
+        }
+        
+        .flexchild {
+            background-color: var(--paper-grey-200);
+            padding: 10px;
+            @apply(--layout-flex);
+            @apply(--paper-font-common-base);
+        }
+        
+        paper-fab.blue {
+            --paper-fab-background: var(--paper-red-500);
+            --paper-fab-keyboard-focus-background: var(--paper-red-900);
+        }
+        
+        paper-fab.float {
+            position: absolute;
+            top: 180px;
+            left: 116px;
+        }
+        
+        paper-card {
+            opacity: 0.9;
+            cursor: pointer;
+        }
+    </style>
+    <template><paper-progress id="progress"></paper-progress>
+      <div class="container">
+        <div>
+            <paper-card image="{{movie.Poster}}" on-tap="playTrailer">
+                <paper-fab class="float blue" icon="av:av:play-arrow"></paper-fab>
+                   <paper-ripple></paper-ripple>
+            </paper-card>
+        </div>
+        <div class="flexchild">
+            <article>
+                <h1>{{movie.Title}}</h1>
+                <p>{{movie.Plot}}</p>
+            </article>
+            <ul>
+                <li>Released: {{movie.Released}}</li>
+                <li>Runtime: {{movie.Runtime}}</li>
+                <li>Cast: {{movie.Actors}}</li>                
+                <li>Writer: {{movie.Writer}}</li>
+            </ul>
+        </div>
+    </div>
+        
+
+    <iron-ajax url="{{omdbURL}}" id="ajaxElement" handle-as="json" on-response="movieResponse"></iron-ajax>
+    </template>
+    <script>
+        Polymer({
+            is: "mv-details",
+            properties: {
+                omdbURL: {
+                    type: String,
+                    value: ''
+                },
+                route: {
+                    type: Object,
+                    reflectToAttribute: true
+                },
+                movie: {
+                    type: Object,
+                    value: {}
+                }
+            },
+            observers: [
+                '_routePageChanged(routeData.page)',
+            ],
+            _routePageChanged: function(routeData) {
+                console.log("From mv-details:", routeData);
+            },
+            attributeChanged: function() {
+                console.log(this.localName + '#' + this.id + ' attribute ' + name +
+                    ' was changed to ' + this.getAttribute(name));
+
+                this.omdbURL = 'http://www.omdbapi.com/?i=' + this.route.path.slice(1);
+                this.$.ajaxElement.generateRequest();
+            },
+            movieResponse: function(response) {
+                this.movie = response.detail.response;
+                console.log("From mv-details :", this.movie);
+            },
+            playTrailer: function() {
+                alert("Trailer!");
+            }
+        })
+    </script>
+</dom-module>

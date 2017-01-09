@@ -1,0 +1,246 @@
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/neon-animation/animations/scale-up-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
+
+<dom-module id="v-app">
+    <template>
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="/:page"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+        
+    <style is="custom-style">
+            app-toolbar {
+                /* Toolbar is the main header, so give it some color */
+                background-color: #ed3b3b;
+                font-family: 'Roboto', Helvetica, sans-serif;
+                color: white;
+                --app-toolbar-font-size: 24px;
+            }
+
+             .toolbar-title{
+                 font-family: @apply(--paper-font-common-base);
+             }
+             
+            div.main-content {
+                margin: 30px;
+            }
+
+            paper-input.search {
+            --paper-input-container-color: #FFF;
+            --paper-input-container-focus-color: #fff;
+            --paper-input-container-invalid-color:yellow;
+            --paper-input-container-input-color: #FFF;
+        }
+        paper-item{
+           cursor: pointer;
+        }
+
+        #drawer  h3{
+            background-color: #ed3b3b;
+            color: #FFF;
+            height: 50px;
+            vertical-align: middle;
+            margin: 0;
+            padding-top: 14px;
+            padding-left: 20px;
+             @apply(--paper-font-common-base);
+        }
+        div.poster {
+            height: 100%;
+            text-align: bottom;
+            vertical-align:bottom;
+        }
+    </style>
+
+    <app-toolbar><paper-icon-button icon="menu" on-tap="toggleDrawer"></paper-icon-button>
+    <div main-title>  <span class="toolbar-title">Movies</span></div>
+            <paper-input class="search" id="searchBox" value="{{searchTerm}}" label="Search movie.."></paper-input>
+            <paper-icon-button icon="search" on-tap="onSearchClick"></paper-icon-button>
+    </app-toolbar>
+
+    <div class="main-content">
+       <v-list name="search" id="searchResult" header-text="Search Results" hide-more-button="true" hidden$="{{!noSearch}}"></v-list>
+       <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main" hidden$="{{noSearch}}">
+          <v-home id="movieHome" name="v-home"></v-home>
+          <mv-details name="mv-details" route="{{subroute}}"></mv-details>
+          <v-genre name="genre" route="{{subroute}}"></v-genre>
+          <v-more name="more" route="{{subroute}}"></v-more>
+       </iron-pages>
+    </div>
+
+    <app-drawer swipe-open id="drawer">
+        <h3>Movies</h3>
+      <paper-listbox selected="0">
+        <paper-item on-tap="pageChanged">Home</paper-item>
+        <paper-item on-tap="pageChanged">Genre</paper-item>
+        <paper-item on-tap="pageChanged">Top List</paper-item>
+        <paper-item on-tap="pageChanged">Upcoming</paper-item>
+     </paper-listbox>
+     <div class="poster">
+        <img src="../assets/images/iman1.jpg">
+     </div>
+    </app-drawer>
+ <paper-toast id="toast" text="Your draft has been discarded."></paper-toast>
+ 
+ <paper-dialog id="dialog" entry-animation="scale-up-animation" style="width:500px;"
+              exit-animation="fade-out-animation" modal="true">
+        <h2 class="dilog-header">Most Popular by Genre</h2>
+        <paper-dialog-scrollable>
+            <template is="dom-repeat" items="[[genreList]]">
+                <paper-item on-tap="genreChanged">{{item}}</paper-item>
+            </template>
+    </paper-dialog-scrollable>
+    </paper-dialog>
+    </template>
+</dom-module>
+
+<script>
+    HTMLImports.whenReady(function() {
+        Polymer({
+            is: "v-app",
+            properties: {
+                isSearchBoxVisible: {
+                    type: Boolean,
+                    value: false
+                },
+                searchTerm: {
+                    type: String,
+                    value: "",
+                    observer: "searchForMovie"
+                },
+                page: {
+                    type: String,
+                    reflectToAttribute: true,
+                    observer: '_pageChanged'
+                },
+                noSearch: {
+                    type: Boolean,
+                    computed: 'toggleSearchBox(isSearchBoxVisible)'
+                },
+                genreList: {
+                    type: Array,
+                    value: ['Action',
+                        'Adventure',
+                        'Animation',
+                        'Biography',
+                        'Comedy',
+                        'Crime',
+                        'Documentary',
+                        'Drama',
+                        'Family',
+                        'Fantasy',
+                        'Film-Noir',
+                        'History',
+                        'Horror',
+                        'Music',
+                        'Musical',
+                        'Mystery',
+                        'Romance',
+                        'Sci-Fi',
+                        'Sport',
+                        'Thriller',
+                        'War',
+                        'Western'
+                    ]
+                },
+                selectedPage: {
+                    type: String,
+                    value: "0"
+                }
+            },
+            observers: [
+                '_routePageChanged(routeData.page)',
+            ],
+            toggleSearchBox: function(isSearchBoxVisible) {
+                return isSearchBoxVisible && (this.page == 'v-home' || !this.page);
+            },
+            _routePageChanged: function(page) {
+                console.log("_routePageChanged:", page);
+                this.page = page || 'v-home';
+            },
+            pageChanged: function(e) {
+                var title = e.target.innerHTML.trim();
+                console.log("pageChanged:", title);
+                switch (title) {
+                    case "Genre":
+                        this.$.dialog.open();
+                        break;
+                    case "Home":
+                        this.set('route.path', '');
+                        break;
+                    case "Upcoming":
+                        this.set('route.path', '/more/upcoming');
+                        break;
+                    case "Top List":
+                        this.set('route.path', '/more/top-list');
+                        break;
+                    default:
+                        this.set('route.path', '');
+                        break;
+                }
+                this.$.drawer.toggle();
+                return true;
+            },
+            genreChanged: function(e) {
+                console.log(e.model.item);
+                this.$.dialog.close();
+                this.set('route.path', '/genre/' + e.model.item.toLowerCase());
+                this.selectedPage = "1";
+            },
+            onSearchClick: function() {
+                if (!this.searchTerm) {
+                    // this.$.toast.show();
+                }
+            },
+            searchForMovie: function(newValue, oldValue) {
+                if (newValue == "") {
+                    //movieHome.dataBind([]);
+                    return;
+                }
+                var movieHome = this.$.searchResult;
+                var movies = JSON.parse(localStorage.getItem("movie-list"));
+                if (!newValue || newValue.length <= 2) {
+                    movieHome.dataBind([]);
+                    return;
+                }
+
+                var filtered = movies.filter(function(obj) {
+                    return obj.Title.toLowerCase().indexOf(newValue) > -1;
+                });
+                movieHome.dataBind(filtered);
+                console.log(filtered);
+            },
+            _pageChanged: function(page) {
+                console.log(page);
+                // Load page import on demand. Show 404 page if fails
+                var resolvedPageUrl = this.resolveUrl(page + '.html');
+                this.importHref(resolvedPageUrl, function(e) {
+                    console.log("Load:", e);
+                }, this._defaultPage, true);
+            },
+            _defaultPage: function(e) {
+                console.log("Error:", e);
+                this.page = 'v-home';
+            },
+            toggleDrawer: function() {
+                this.$.drawer.toggle();
+            },
+            ready: function() {
+                document.querySelector('v-home').addEventListener('itemSelected', function(data) {
+                    this.page = '/mv-details/' + data.detail.imdbID;
+                    window.history.pushState({}, data.detail, this.page);
+                    window.dispatchEvent(new CustomEvent('location-changed'));
+                });
+            },
+            activated: function(e) {
+                console.log("activated:", e);
+            }
+        });
+    });
+</script>

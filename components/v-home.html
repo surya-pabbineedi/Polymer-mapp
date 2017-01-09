@@ -1,0 +1,28 @@
+<link rel="import" href="v-list.html">
+
+<dom-module id="v-home">
+    <template>
+    <v-list name="search" id="searchResult" header-text="Search Results" hide-more-button="true" hidden$="{{!isSearch}}"></v-list>
+    <v-list name="upcoming" up-coming="true" more-url="more/upcoming" id="upcomingMovies" pull-data="true" header-text="Upcoming Movies" hidden$="{{isSearch}}"></v-list>
+    <v-list name="recomended" more-url="more/recomended" id="recomendedMovies" pull-data="true" header-text="Recomended Movies" hidden$="{{isSearch}}"></v-list>
+    </template>
+    <script>
+        Polymer({
+            is: 'v-home',
+            properties: {
+                isSearch: {
+                    type: Boolean,
+                    value: false
+                }
+            },
+            searchResults: function(data) {
+                this.isSearch = true;
+                searchResult.dataBind(data);
+            },
+            hideSearch: function() {
+                this.isSearch = false;
+                searchResult.dataBind([]);
+            }
+        });
+    </script>
+</dom-module>

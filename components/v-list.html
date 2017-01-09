@@ -1,0 +1,250 @@
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
+<link rel="import" href="../bower_components/paper-styles/paper-styles.html">
+
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/font-roboto/roboto.html">
+
+<dom-module id="v-list">
+    <template>
+        <style>
+        div.wrapper {
+            margin-bottom: 15px;
+        }
+        .header button {
+            display: inline;
+        }
+        .header section{
+            vertical-align: top;
+            width:100%;
+            height: 45px;
+            border-bottom: 1px solid  var(--paper-grey-400);
+        }
+        .header section h3{
+            display: inline;
+        }
+        .nodata, .header > h2 {
+            font-family:  @apply(--paper-font-common-base);
+            display: inline;
+            color: var(--paper-orange-400);
+        }
+        div.movie-container {
+            display: inline;
+        }
+
+            paper-card {
+                max-width: 150px;
+                height: 400px;
+                vertical-align: top;
+                margin: 5px;
+            }
+            
+        iron-icon.star:last-of-type { color: var(--paper-grey-500); }
+        p.small {
+             color: var(--paper-grey-500);
+             font-size: 9px;
+        }
+        .right {
+            float: right;
+        }
+        div.card-content > section > p {
+            display: inline;
+        }
+        #rating {
+             color: #000;
+             font-size: 9px;
+        }
+        div.title {
+            color: var(--paper-grey-500);
+        }
+        .movie-card{
+            cursor: pointer;
+        }
+        a.seemore{
+            text-decoration: none;
+        }
+        a.seemore paper-button {
+            background-color: #ed3b3b;
+            color:#FFF;
+        }
+        .list-header-text{
+            font-family:  @apply(--paper-font-common-base);
+            margin: 0;  
+            color:#FFF;
+        }
+       
+    </style>
+<div class="wrapper"> 
+        <header class="header">
+            <section>
+                <h3 class="list-header-text">{{headerText}}</h3>
+                <a  id="moreMovies" name="upcoming" href="{{moreUrl}}" class="seemore right">
+                    <paper-button  raised>See More</paper-button>
+                </a>
+            </section>
+        </header>
+    <!-- local DOM goes here -->
+            <template is="dom-repeat" items="{{movies}}">
+                <div class="movie-container">
+                    <paper-card image="{{item.Poster}}" class="movie-card" on-tap="details">
+                        <paper-ripple></paper-ripple>
+                        <div class="card-content">
+                            <div class="title">{{item.Title}}</div>
+                            <!--<section><p id="rating" class="small">{{item.imdbRating}}</p></section>-->
+                            <p class="small">[[formatPlot(item.Plot)]]</p>
+                             <!--<p class="small right">{{item.Genre}}</p></section>-->
+                        </div>
+                     </paper-card>
+                </div>
+            </template>
+
+
+    <template is="dom-if" if="{{noDataAvailable}}"><h2 class="nodata">Opps! No results were found.</h2></template>
+
+    <iron-ajax url="{{dataUrl}}" id="ajaxElement" handle-as="json" on-response="movieResponse"></iron-ajax>
+
+    </template>
+    </div>
+    <script>
+        Polymer({
+            is: 'v-list',
+            properties: {
+                id: {
+                    type: String,
+                    value: "",
+                    reflectToAttribute: true
+                },
+                noofItems: {
+                    type: Number,
+                    value: 5,
+                    reflectToAttribute: true
+                },
+                movies: {
+                    type: Array,
+                    value: []
+                },
+                headerText: {
+                    type: String,
+                    value: ""
+                },
+                pullData: {
+                    type: Boolean,
+                    value: false
+                },
+                hideMoreButton: {
+                    type: Boolean,
+                    value: false
+                },
+                moreUrl: {
+                    type: String,
+                    value: "",
+                    reflectToAttribute: true
+                },
+                noDataAvailable: {
+                    type: Boolean,
+                    computed: 'recordCount(movies)'
+                },
+                dataUrl: {
+                    type: String,
+                    value: "/assets/movies.json",
+                    reflectToAttribute: true
+                },
+                upComing: {
+                    type: Boolean,
+                    value: false,
+                    reflectToAttribute: true
+                },
+                byGenre: {
+                    type: String,
+                    reflectToAttribute: true
+                },
+            },
+            recordCount: function(data) {
+                return data.length == 0;
+            },
+            formatPlot: function(plot) {
+                var formattedStr = plot;
+                if (formattedStr.length > 180) {
+                    formattedStr = plot.substring(0, 180) + '...';
+                }
+                return formattedStr;
+            },
+            movieResponse: function(response) {
+                sessionStorage.setItem(this.id + "-movie-list", JSON.stringify(response.detail.response));
+
+                var mvs = response.detail.response;
+                if (this.upComing) {
+                    mvs = mvs.filter(function(mv) {
+                        var rlsd = Date.parse(mv.Released);
+                        return rlsd > new Date();
+                    });
+                }
+                //  else {
+                //     mvs = mvs.filter(function(mv) {
+                //         var rlsd = Date.parse(mv.Released);
+                //         return rlsd < new Date();
+                //     });
+                // }
+
+                this.movies = mvs.splice(0, this.noofItems);
+
+                if (this.byGenre) {
+                    var keyWord = this.byGenre.toLowerCase();
+
+                    mvs = mvs.filter(function(mv) {
+                        return mv.Genre.toLowerCase().indexOf(keyWord) > 0;
+                    });
+
+                    this.movies = mvs;
+                    console.log(mvs);
+                }
+
+            },
+            getMovies() {
+                this.$.ajaxElement.generateRequest();
+                // var movieData = sessionStorage.getItem(this.id + "-movie-list");
+                // if (!movieData) {
+                //     console.log("Requesting url:", this.url);
+
+                // }
+            },
+            dataBind: function(source) {
+                this.movies = source;
+            },
+            ready: function() {
+                console.log(this.id);
+                var avaialbeWidth = screen.availWidth;
+                var count = parseInt(avaialbeWidth / 170);
+                if (avaialbeWidth <= avaialbeWidth + (count * 5)) {
+                    this.noofItems = count - 1;
+                } else {
+                    this.noofItems = count;
+                }
+
+                if (this.pullData) {
+                    this.getMovies();
+                }
+
+                if (this.hideMoreButton) {
+                    this.$.moreMovies.style.display = 'none';
+                }
+            },
+            viewallMovies: function() {
+                console.log("Route Change");
+                this.set('route.path', "/more");
+            },
+            details: function(event) {
+                var item = event.model.get('item');
+                var oItem = this.movies.filter(function(i) {
+                    return i.imdbID == item.imdbID;
+                });
+                console.log(oItem)
+                this.fire('itemSelected', oItem[0]);
+            }
+        });
+    </script>
+</dom-module>

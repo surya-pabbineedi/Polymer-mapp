@@ -1,0 +1,37 @@
+<link rel="import" href="v-list.html">
+
+<dom-module id="v-genre">
+    <template>
+        <v-list id="genreList" hide-more-button="true" header-text="{{headerText}}"></v-list>
+    </template>
+    <script>
+        Polymer({
+            is: 'v-genre',
+            properties: {
+                isSearch: {
+                    type: Boolean,
+                    value: false
+                },
+                headerText: {
+                    type: String,
+                    value: ""
+                },
+                route: {
+                    type: Object,
+                    reflectToAttribute: true
+                }
+            },
+            attributeChanged: function() {
+                var genre = location.pathname.split('/')[2];
+                this.headerText = genre.charAt(0).toUpperCase() + genre.slice(1) + " Movies";
+                this.$.genreList.byGenre = genre;
+                this.$.genreList.getMovies();
+                this.$.genreList.addEventListener('itemSelected', function(data) {
+                    this.page = '/mv-details/' + data.detail.imdbID;
+                    window.history.pushState({}, data.detail, this.page);
+                    window.dispatchEvent(new CustomEvent('location-changed'));
+                });
+            }
+        });
+    </script>
+</dom-module>
