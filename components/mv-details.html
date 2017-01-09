@@ -30,6 +30,14 @@
             opacity: 0.9;
             cursor: pointer;
         }
+        
+        .right {
+            text-align: right;
+        }
+        
+        #dialog h3 {
+            padding: 5px;
+        }
     </style>
     <template><paper-progress id="progress"></paper-progress>
       <div class="container">
@@ -50,17 +58,26 @@
                 <li>Cast: {{movie.Actors}}</li>                
                 <li>Writer: {{movie.Writer}}</li>
             </ul>
-        </div>
-    </div>
-        
 
-    <iron-ajax url="{{omdbURL}}" id="ajaxElement" handle-as="json" on-response="movieResponse"></iron-ajax>
+            <paper-dialog id="dialog" vertical-align="top" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal="true">
+                 <h3>{{movie.Title}}<paper-icon-button class="right" icon="close" on-tap="clearModal"></paper-icon-button></h3>
+                 <div id="jwPlayer"></div>
+            </paper-dialog>
+    
+    </div>
+    </div>
+
+    <iron-ajax url="/assets/movies.json" id="ajaxElement" handle-as="json" on-response="movieResponse"></iron-ajax>
     </template>
     <script>
         Polymer({
             is: "mv-details",
             properties: {
                 omdbURL: {
+                    type: String,
+                    value: ''
+                },
+                imdbID: {
                     type: String,
                     value: ''
                 },
@@ -80,18 +97,40 @@
                 console.log("From mv-details:", routeData);
             },
             attributeChanged: function() {
-                console.log(this.localName + '#' + this.id + ' attribute ' + name +
-                    ' was changed to ' + this.getAttribute(name));
-
+                this.imdbID = this.route.path.slice(1);
                 this.omdbURL = 'http://www.omdbapi.com/?i=' + this.route.path.slice(1);
                 this.$.ajaxElement.generateRequest();
             },
             movieResponse: function(response) {
-                this.movie = response.detail.response;
+                var movies = response.detail.response;
+                console.log(movies, this.imdbID);
+                var iID = this.imdbID;
+                var fMovies = movies.filter(function(mv) {
+                    return mv.imdbID == iID;
+                });
+
+                this.movie = fMovies[0];
+                var player = jwplayer('jwPlayer');
+                var tUrl = this.movie.Trailer ? this.movie.Trailer : '//content.jwplatform.com/manifests/1b02B03R.m3u8';
+                player.setup({
+                    file: tUrl,
+                    image: this.movie.Poster.replace('https:', ''),
+                    autostart: false,
+                    width: 750,
+                    height: 400
+                });
+
                 console.log("From mv-details :", this.movie);
             },
             playTrailer: function() {
-                alert("Trailer!");
+                this.$.dialog.open();
+                var player = jwplayer('jwPlayer');
+                player.play();
+            },
+            clearModal: function() {
+                this.$.dialog.close();
+                var player = jwplayer('jwPlayer');
+                player.stop();
             }
         })
     </script>

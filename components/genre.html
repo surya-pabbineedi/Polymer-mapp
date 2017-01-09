@@ -23,8 +23,10 @@
             },
             attributeChanged: function() {
                 var genre = location.pathname.split('/')[2];
-                this.headerText = genre.charAt(0).toUpperCase() + genre.slice(1) + " Movies";
-                this.$.genreList.byGenre = genre;
+                if (genre) {
+                    this.headerText = genre.charAt(0).toUpperCase() + genre.slice(1) + " Movies";
+                    this.$.genreList.byGenre = genre;
+                }
                 this.$.genreList.getMovies();
                 this.$.genreList.addEventListener('itemSelected', function(data) {
                     this.page = '/mv-details/' + data.detail.imdbID;
