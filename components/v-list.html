@@ -80,7 +80,7 @@
     </style>
 <div class="wrapper"> 
         <header class="header">
-            <section>
+            <section hidden$="{{hideTitle}}">
                 <h3 class="list-header-text">{{headerText}}</h3>
                 <a  id="moreMovies" name="upcoming" href="{{moreUrl}}" class="seemore right">
                     <paper-button  raised>See More</paper-button>
@@ -162,6 +162,10 @@
                     type: String,
                     reflectToAttribute: true
                 },
+                hideTitle: {
+                    type: Boolean,
+                    reflectToAttribute: true
+                }
             },
             recordCount: function(data) {
                 return data.length == 0;
@@ -193,12 +197,21 @@
                 this.movies = mvs.splice(0, this.noofItems);
 
                 if (this.byGenre) {
+                    var keyWords = [];
                     var keyWord = this.byGenre.toLowerCase();
+                    if (keyWord.indexOf('&') > 0) {
+                        keyWords = keyWord.replace('/', '').split('&');
+                    }
 
-                    mvs = mvs.filter(function(mv) {
-                        return mv.Genre.toLowerCase().indexOf(keyWord) > 0;
-                    });
-
+                    if (keyWords.length > 0) {
+                        mvs = mvs.filter(function(e) {
+                            return this.indexOf(e) < 0;
+                        }, keyWords);
+                    } else {
+                        mvs = mvs.filter(function(mv) {
+                            return mv.Genre.toLowerCase().indexOf(keyWord) > 0;
+                        });
+                    }
                     this.movies = mvs;
                     console.log(mvs);
                 }

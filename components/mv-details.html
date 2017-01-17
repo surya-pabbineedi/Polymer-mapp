@@ -10,7 +10,7 @@
         
         .flexchild {
             background-color: var(--paper-grey-200);
-            padding: 10px;
+            padding-left: 20px;
             @apply(--layout-flex);
             @apply(--paper-font-common-base);
         }
@@ -20,14 +20,7 @@
             --paper-fab-keyboard-focus-background: var(--paper-red-900);
         }
         
-        paper-fab.float {
-            position: absolute;
-            top: 180px;
-            left: 116px;
-        }
-        
         paper-card {
-            opacity: 0.9;
             cursor: pointer;
         }
         
@@ -37,13 +30,31 @@
         
         #dialog h3 {
             padding: 5px;
+            margin: 0;
+        }
+        
+        div.advertisement {
+            height: 75px;
+            background-image: url('../assets/images/advert.jpg');
+            background-repeat: no-repeat;
+        }
+        
+        .paper-dialog-0>*:last-child {
+            margin-bottom: 0;
+        }
+        
+        section.trailer {
+            cursor: pointer;
+        }
+        
+        section.trailer>paper-fab {
+            display: inline;
         }
     </style>
     <template><paper-progress id="progress"></paper-progress>
       <div class="container">
         <div>
             <paper-card image="{{movie.Poster}}" on-tap="playTrailer">
-                <paper-fab class="float blue" icon="av:av:play-arrow"></paper-fab>
                    <paper-ripple></paper-ripple>
             </paper-card>
         </div>
@@ -52,6 +63,9 @@
                 <h1>{{movie.Title}}</h1>
                 <p>{{movie.Plot}}</p>
             </article>
+            <section class="trailer" on-tap="playTrailer">
+                <paper-fab class="blue" icon="av:av:play-arrow"></paper-fab>Trailer                
+            </section>
             <ul>
                 <li>Released: {{movie.Released}}</li>
                 <li>Runtime: {{movie.Runtime}}</li>
@@ -62,6 +76,7 @@
             <paper-dialog id="dialog" vertical-align="top" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal="true">
                  <h3>{{movie.Title}}<paper-icon-button class="right" icon="close" on-tap="clearModal"></paper-icon-button></h3>
                  <div id="jwPlayer"></div>
+                 <div class="advertisement"></div>
             </paper-dialog>
     
     </div>
@@ -95,6 +110,7 @@
             ],
             _routePageChanged: function(routeData) {
                 console.log("From mv-details:", routeData);
+
             },
             attributeChanged: function() {
                 this.imdbID = this.route.path.slice(1);
@@ -110,14 +126,15 @@
                 });
 
                 this.movie = fMovies[0];
+                if (!this.movie) return
+
                 var player = jwplayer('jwPlayer');
                 var tUrl = this.movie.Trailer ? this.movie.Trailer : '//content.jwplatform.com/manifests/1b02B03R.m3u8';
                 player.setup({
                     file: tUrl,
                     image: this.movie.Poster.replace('https:', ''),
                     autostart: false,
-                    width: 750,
-                    height: 400
+                    width: 700
                 });
 
                 console.log("From mv-details :", this.movie);

@@ -2,7 +2,7 @@
 
 <dom-module id="v-genre">
     <template>
-        <v-list id="genreList" hide-more-button="true" header-text="{{headerText}}"></v-list>
+        <v-list id="genreList" hide-more-button="true"  hide-title="true"></v-list>
     </template>
     <script>
         Polymer({
@@ -22,9 +22,9 @@
                 }
             },
             attributeChanged: function() {
-                var genre = location.pathname.split('/')[2];
+                var genre = this.route.path; //location.pathname.split('/')[2];
                 if (genre) {
-                    this.headerText = genre.charAt(0).toUpperCase() + genre.slice(1) + " Movies";
+                    // this.headerText = genre.charAt(0).toUpperCase() + genre.slice(1) + " Movies";
                     this.$.genreList.byGenre = genre;
                 }
                 this.$.genreList.getMovies();

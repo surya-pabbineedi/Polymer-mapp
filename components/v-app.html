@@ -56,11 +56,15 @@
             text-align: bottom;
             vertical-align:bottom;
         }
+        div.push {
+            min-height: 180px;
+        }
     </style>
 
     <app-toolbar>
-        <paper-icon-button icon="menu" on-tap="toggleDrawer"></paper-icon-button>
-    <div main-title>  <span class="toolbar-title">Movies</span></div>
+        <paper-icon-button icon="menu" on-tap="toggleDrawer" hidden$="{{!isSearchAvailable}}"></paper-icon-button>
+        <paper-icon-button icon="arrow-back" hidden$="{{isSearchAvailable}}" on-tap="navigateToHome" title="Back to Movies"></paper-icon-button>
+    <div main-title>  <span class="toolbar-title">{{pageTitle}}</span></div>
           <paper-input class="search" id="searchBox" value="{{searchTerm}}" label="Search movie.." hidden$="{{!isSearchAvailable}}"></paper-input>
           <paper-icon-button icon="search" on-tap="onSearchClick" hidden$="{{!isSearchAvailable}}"></paper-icon-button>
     </app-toolbar>
@@ -80,9 +84,8 @@
         <paper-listbox selected="0">
             <paper-item on-tap="pageChanged">Home</paper-item>
             <paper-item on-tap="pageChanged">Genre</paper-item>
-            <paper-item on-tap="pageChanged">Top List</paper-item>
-            <paper-item on-tap="pageChanged">Upcoming</paper-item>
         </paper-listbox>
+        <div class="push"></div>
         <div class="poster">
             <img src="../assets/images/iman1.jpg">
         </div>
@@ -107,6 +110,10 @@
         Polymer({
             is: "v-app",
             properties: {
+                pageTitle: {
+                    type: String,
+                    value: "Movies"
+                },
                 isSearchBoxVisible: {
                     type: Boolean,
                     value: false
@@ -127,28 +134,17 @@
                 },
                 genreList: {
                     type: Array,
-                    value: ['Action',
-                        'Adventure',
+                    value: ['New Releases',
+                        'Action & Adventure',
                         'Animation',
-                        'Biography',
                         'Comedy',
-                        'Crime',
                         'Documentary',
                         'Drama',
                         'Family',
-                        'Fantasy',
-                        'Film-Noir',
-                        'History',
                         'Horror',
-                        'Music',
-                        'Musical',
+                        'Musical & Suspense',
                         'Mystery',
-                        'Romance',
-                        'Sci-Fi',
-                        'Sport',
-                        'Thriller',
-                        'War',
-                        'Western'
+                        'Sci-Fi & Fantasy'
                     ]
                 },
                 selectedPage: {
@@ -175,6 +171,7 @@
                 console.log("_routePageChanged:", page);
                 this.page = page || 'v-home';
                 if (this.page == 'v-home') {
+                    this.pageTitle = "Movies";
                     this.isSearchAvailable = true;
                 } else {
                     this.isSearchAvailable = false;
@@ -194,12 +191,6 @@
                     case "Home":
                         this.set('route.path', '');
                         break;
-                    case "Upcoming":
-                        this.set('route.path', '/more/upcoming');
-                        break;
-                    case "Top List":
-                        this.set('route.path', '/more/top-list');
-                        break;
                     default:
                         this.set('route.path', '');
                         break;
@@ -209,6 +200,7 @@
             },
             genreChanged: function(e) {
                 console.log(e.model.item);
+                this.pageTitle = e.model.item;
                 this.$.dialog.close();
                 this.set('route.path', '/genre/' + e.model.item.toLowerCase());
                 this.selectedPage = "1";
@@ -217,6 +209,10 @@
                 if (!this.searchTerm) {
                     // this.$.toast.show();
                 }
+            },
+            navigateToHome: function() {
+                this.pageTitle = "Movies";
+                this.set('route.path', '');
             },
             searchForMovie: function(newValue, oldValue) {
                 if (newValue == "") {
@@ -243,7 +239,14 @@
                 movieHome.dataBind(filtered);
             },
             _pageChanged: function(page) {
-                console.log(page);
+                console.log(this.route.path);
+                if (page == 'more') {
+                    if (this.route.path.indexOf('upcoming') > 0) {
+                        this.pageTitle = "Upcoming Movies";
+                    } else if (this.route.path.indexOf('recomended') > 0) {
+                        this.pageTitle = "Recomended Movies";
+                    }
+                }
                 // Load page import on demand. Show 404 page if fails
                 var resolvedPageUrl = this.resolveUrl(page + '.html');
                 this.importHref(resolvedPageUrl, function(e) {
@@ -258,13 +261,16 @@
                 this.$.drawer.toggle();
             },
             ready: function() {
+                var self = this;
                 document.querySelector('v-home').addEventListener('itemSelected', function(data) {
+                    self.pageTitle = data.detail.Title;
                     this.page = '/mv-details/' + data.detail.imdbID;
                     window.history.pushState({}, data.detail, this.page);
                     window.dispatchEvent(new CustomEvent('location-changed'));
                 });
 
                 document.querySelector('v-list').addEventListener('itemSelected', function(data) {
+                    self.pageTitle = data.detail.Title;
                     this.page = '/mv-details/' + data.detail.imdbID;
                     window.history.pushState({}, data.detail, this.page);
                     window.dispatchEvent(new CustomEvent('location-changed'));
